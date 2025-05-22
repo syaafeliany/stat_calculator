@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced Statistical Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    input, textarea, button { margin-top: 10px; display: block; width: 400px; padding: 8px; }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+<body>
+<header>
+    <nav>
+        <a href="#basic-calculator" id="nav-basic" class="active">Basic Calculator</a>
+        <a href="inferential_statistics_Calculator.html" id="nav-inferential">Inferential Statistics</a>
+        <a href="probability_calculate.html" id="nav-probability">Probability Calculator</a>
+        <a href="data_visualization.html" id="nav-visualization">Data Visualization</a>
+    </nav>
+</header>
+
+<style>
+    header {
+        background-color: #007bff;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 50px;
+        flex-wrap: wrap;
+        font-weight: 600;
+        font-size: 18px;
+    }
+    header nav {
+        display: flex;
+        gap: 25px;
+    }
+    header nav a {
+        color: white;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    header nav a:hover, header nav a.active {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+
+  <h2>Advanced Statistical Calculator</h2>
+
+  <label>Enter numbers (comma-separated):</label>
+  <input type="text" id="dataInput" placeholder="e.g. 1,2,3,4,5">
+
+  <label>Enter Y values for regression (optional, same length):</label>
+  <input type="text" id="yInput" placeholder="e.g. 2,4,6,8,10">
+
+  <button onclick="calculate()">Calculate</button>
+
+  <pre id="output">Results will appear here...</pre>
+
+  <canvas id="chart" width="400" height="200"></canvas>
+
+  <script src="stats.js"></script>
+  <script>
+    function calculate() {
+      const numbers = document.getElementById('dataInput').value.split(',').map(Number).filter(n => !isNaN(n));
+      const yValues = document.getElementById('yInput').value.split(',').map(Number).filter(n => !isNaN(n));
+      const out = document.getElementById('output');
+
+      if (numbers.length === 0) {
+        out.textContent = 'Please enter valid numbers.';
+        return;
+      }
+
+      const stats = calculateBasicStats(numbers);
+      const ci = confidenceInterval(numbers);
+      let output = `Mean: ${stats.mean.toFixed(2)}\nMedian: ${stats.median}\nMode: ${stats.mode.join(', ')}\n`;
+      output += `Variance: ${stats.variance.toFixed(2)}\nStandard Deviation: ${stats.stdDev.toFixed(2)}\n`;
+      output += `Confidence Interval (95%): [${ci[0].toFixed(2)}, ${ci[1].toFixed(2)}]\n`;
+
+      if (yValues.length === numbers.length) {
+        const reg = linearRegression(numbers, yValues);
+        output += `\nLinear Regression:\nSlope: ${reg.slope.toFixed(2)}\nIntercept: ${reg.intercept.toFixed(2)}\nCorrelation (r): ${reg.correlation.toFixed(2)}\n`;
+
+        // Chart for regression
+        const ctx = document.getElementById('chart').getContext('2d');
+        new Chart(ctx, {
+          type: 'scatter',
+          data: {
+            datasets: [{
+              label: 'Data Points',
+              data: numbers.map((x, i) => ({ x, y: yValues[i] })),
+              backgroundColor: 'blue'
+            }, {
+              label: 'Regression Line',
+              type: 'line',
+              data: [
+                { x: Math.min(...numbers), y: reg.intercept + reg.slope * Math.min(...numbers) },
+                { x: Math.max(...numbers), y: reg.intercept + reg.slope * Math.max(...numbers) }
+              ],
+              borderColor: 'red',
+              fill: false,
+              tension: 0
+            }]
+          },
+          options: { responsive: true, scales: { x: { type: 'linear', position: 'bottom' } } }
+        });
+      }
+
+      out.textContent = output;
+    }
+  </script>
+</body>
+</html>

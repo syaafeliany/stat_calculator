@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Data Visualization Calculator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f8fa;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #007bff;
+        }
+        label {
+            margin-top: 10px;
+            display: block;
+            font-weight: 600;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            font-size: 16px;
+            margin-top: 6px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            resize: vertical;
+        }
+        select, button {
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        select {
+            width: 100%;
+        }
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-weight: 700;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        canvas {
+            margin-top: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ccc;
+        }
+        #boxplot-stats {
+            margin-top: 20px;
+            font-size: 14px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ccc;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+     <header>
+    <nav>
+        <a href="index.html" id="nav-basic" class="active">Basic Calculator</a>
+        <a href="inferential_statistics_Calculator.html" id="nav-inferential">Inferential Statistics</a>
+        <a href="probability_calculate.html" id="nav-probability">Probability Calculator</a>
+        <a href="data_visualization.html" id="nav-visualization">Data Visualization</a>
+    </nav>
+</header>
+
+<style>
+    header {
+        background-color: #007bff;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 50px;
+        flex-wrap: wrap;
+        font-weight: 600;
+        font-size: 18px;
+    }
+    header nav {
+        display: flex;
+        gap: 25px;
+    }
+    header nav a {
+        color: white;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    header nav a:hover, header nav a.active {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+    <h1>Data Visualization Calculator</h1>
+
+    <label for="dataInput">Enter numeric data (comma or space separated):</label>
+    <textarea id="dataInput" placeholder="Example: 10, 20, 30, 40, 50"></textarea>
+
+    <label for="chartType">Choose Chart Type:</label>
+    <select id="chartType">
+        <option value="bar">Bar Chart</option>
+        <option value="pie">Pie Chart</option>
+        <option value="line">Line Chart</option>
+        <option value="scatter">Scatter Plot</option>
+        <option value="histogram">Histogram</option>
+        <option value="boxplot">Box Plot</option>
+    </select>
+
+    <button id="drawChartBtn">Draw Chart</button>
+
+    <canvas id="myChart" width="800" height="450"></canvas>
+
+    <div id="boxplot-stats" style="display:none;"></div>
+
+    <div class="footer">
+        Created for Data Visualization with Dynamic Interactive Charts & Distribution Analysis
+    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('myChart').getContext('2d');
+        let currentChart = null;
+
+        function parseData(input) {
+            // Split by , or space and convert to numbers
+            let data = input.split(/[\s,]+/).map(x => parseFloat(x)).filter(x => !isNaN(x));
+            return data;
+        }
+
+        // Function to group data into bins for histogram
+        function makeHistogram(data, numBins = 10) {
+            if (!data.length) return { bins: [], counts: [] };
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const binWidth = (max - min) / numBins;
+
+            let bins = [];
+            for (let i = 0; i <= numBins; i++) {
+                bins.push(min + i * binWidth);
+            }
+
+            let counts = new Array(numBins).fill(0);
+
+            data.forEach(value => {
+                if (value === max) {
+                    counts[numBins - 1]++;
+                } else {
+                    let idx = Math.floor((value - min) / binWidth);
+                    counts[idx]++;
+                }
+            });
+
+            return { bins, counts };
+        }
+
+        // Function to compute box plot statistics: min, Q1, median, Q3, max
+        function computeBoxPlotStats(data) {
+            if (data.length === 0) return null;
+            data.sort((a, b) => a - b);
+
+            const min = data[0];
+            const max = data[data.length - 1];
+            const median = getQuantile(data, 0.5);
+            const q1 = getQuantile(data, 0.25);
+            const q3 = getQuantile(data, 0.75);
+
+            function getQuantile(arr, q) {
+                const pos = (arr.length - 1) * q;
+                const base = Math.floor(pos);
+                const rest = pos - base;
+                if ((arr[base + 1] !== undefined)) {
+                    return arr[base] + rest * (arr[base + 1] - arr[base]);
+                } else {
+                    return arr[base];
+                }
+            }
+
+            return {min, q1, median, q3, max};
+        }
+
+        function createScatterData(data) {
+            // Create points x = index, y = data value
+            return data.map((y,i) => ({x: i + 1, y}));
+        }
+
+        document.getElementById('drawChartBtn').addEventListener('click', () => {
+            const input = document.getElementById('dataInput').value;
+            const chartType = document.getElementById('chartType').value;
+            const rawData = parseData(input);
+
+            if (rawData.length === 0) {
+                alert('Please enter valid numeric data.');
+                return;
+            }
+
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+
+            document.getElementById('boxplot-stats').style.display = 'none';
+            document.getElementById('boxplot-stats').innerHTML = '';
+
+            let config;
+
+            switch(chartType) {
+                case 'bar':
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: rawData.map((_,i) => (i+1).toString()),
+                            datasets: [{
+                                label: 'Values',
+                                data: rawData,
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    };
+                    break;
+
+                case 'pie':
+                    config = {
+                        type: 'pie',
+                        data: {
+                            labels: rawData.map((_,i) => 'Item ' + (i+1)),
+                            datasets: [{
+                                label: 'Values',
+                                data: rawData,
+                                backgroundColor: rawData.map(() => `hsl(${Math.random()*360}, 70%, 70%)`),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true
+                        }
+                    };
+                    break;
+
+                case 'line':
+                    config = {
+                        type: 'line',
+                        data: {
+                            labels: rawData.map((_,i) => (i+1).toString()),
+                            datasets: [{
+                                label: 'Values',
+                                data: rawData,
+                                fill: false,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    };
+                    break;
+
+                case 'scatter':
+                    const scatterData = createScatterData(rawData);
+                    config = {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'Data Points',
+                                data: scatterData,
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: {
+                                    type: 'linear',
+                                    position: 'bottom',
+                                    title: {
+                                        display: true,
+                                        text: 'Index'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Value'
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    break;
+
+                case 'histogram':
+                    const binsCount = Math.min(10, Math.ceil(Math.sqrt(rawData.length)));
+                    const hist = makeHistogram(rawData, binsCount);
+                    const binMidpoints = hist.bins.slice(0, -1).map((v,i) => ((v + hist.bins[i+1]) / 2).toFixed(2));
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: binMidpoints,
+                            datasets: [{
+                                label: 'Frequency',
+                                data: hist.counts,
+                                backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                                borderColor: 'rgba(153, 102, 255, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Count'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Bins'
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    break;
+
+                case 'boxplot':
+                    // Chart.js does not support boxplots natively.
+                    // Show stats below the chart area.
+                    const stats = computeBoxPlotStats(rawData);
+                    const statDiv = document.getElementById('boxplot-stats');
+                    statDiv.style.display = 'block';
+                    statDiv.innerHTML = `
+                        <strong>Box Plot Statistics:</strong><br>
+                        Minimum: ${stats.min}<br>
+                        Q1 (25th percentile): ${stats.q1}<br>
+                        Median (50th percentile): ${stats.median}<br>
+                        Q3 (75th percentile): ${stats.q3}<br>
+                        Maximum: ${stats.max}
+                    `;
+
+                    // Render simple whisker plot with scatter and bar elements
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['Min', 'Q1', 'Median', 'Q3', 'Max'],
+                            datasets: [{
+                                label: 'Value',
+                                data: [stats.min, stats.q1, stats.median, stats.q3, stats.max],
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.6)',
+                                    'rgba(255, 159, 64, 0.6)',
+                                    'rgba(54, 162, 235, 0.8)',
+                                    'rgba(153, 102, 255, 0.6)',
+                                    'rgba(75, 192, 192, 0.6)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    };
+                    break;
+
+                default:
+                    alert("Unsupported chart type.");
+                    return;
+            }
+
+            currentChart = new Chart(ctx, config);
+        });
+    </script>
+</body>
+</html>
+

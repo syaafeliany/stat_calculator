@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inferential Statistics Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+        }
+        input[type="number"], input[type="text"] {
+            padding: 10px;
+            width: 200px;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <header>
+    <nav>
+        <a href="index.html" id="nav-basic" class="active">Basic Calculator</a>
+        <a href="inferential_statistics_Calculator.html" id="nav-inferential">Inferential Statistics</a>
+        <a href="probability_calculate.html" id="nav-probability">Probability Calculator</a>
+        <a href="data_visualization.html" id="nav-visualization">Data Visualization</a>
+    </nav>
+</header>
+
+<style>
+    header {
+        background-color: #007bff;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 50px;
+        flex-wrap: wrap;
+        font-weight: 600;
+        font-size: 18px;
+    }
+    header nav {
+        display: flex;
+        gap: 25px;
+    }
+    header nav a {
+        color: white;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    header nav a:hover, header nav a.active {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+
+    <h1>Inferential Statistics Calculator</h1>
+
+    <h2>Confidence Interval Estimation (Z-test)</h2>
+    <input type="number" id="zSampleMean" placeholder="Sample Mean (x̄)">
+    <input type="number" id="zPopulationMean" placeholder="Population Mean (μ)">
+    <input type="number" id="zStdDev" placeholder="Population Std Dev (σ)">
+    <input type="number" id="zSampleSize" placeholder="Sample Size (n)">
+    <button id="zTestButton">Calculate Z-test CI</button>
+    <div class="result" id="zResult"></div>
+
+    <h2>Confidence Interval Estimation (T-test)</h2>
+    <input type="number" id="tSampleMean" placeholder="Sample Mean (x̄)">
+    <input type="number" id="tStdDev" placeholder="Sample Std Dev (s)">
+    <input type="number" id="tSampleSizeT" placeholder="Sample Size (n)">
+    <input type="number" id="tConfidenceLevel" placeholder="Confidence Level (e.g., 0.95)">
+    <button id="tTestButton">Calculate T-test CI</button>
+    <div class="result" id="tResult"></div>
+
+    <h2>Hypothesis Testing (One-sample)</h2>
+    <input type="number" id="oneSampleMean" placeholder="Sample Mean (x̄)">
+    <input type="number" id="onePopulationMean" placeholder="Population Mean (μ)">
+    <input type="number" id="oneStdDev" placeholder="Population Std Dev (σ)">
+    <input type="number" id="oneSampleSize" placeholder="Sample Size (n)">
+    <button id="oneSampleTestButton">One-sample Test</button>
+    <div class="result" id="oneSampleResult"></div>
+
+    <h2>Chi-Square Test for Independence</h2>
+    <input type="text" id="chiSquareData" placeholder="Enter data (comma-separated)">
+    <button id="chiSquareButton">Calculate Chi-Square</button>
+    <div class="result" id="chiSquareResult"></div>
+
+    <script>
+        // Z-test Confidence Interval Calculation
+        document.getElementById("zTestButton").addEventListener("click", function() {
+            const sampleMean = parseFloat(document.getElementById("zSampleMean").value);
+            const populationMean = parseFloat(document.getElementById("zPopulationMean").value);
+            const stdDev = parseFloat(document.getElementById("zStdDev").value);
+            const sampleSize = parseFloat(document.getElementById("zSampleSize").value);
+            const zCritical = 1.96; // For 95% confidence
+
+            const marginOfError = zCritical * (stdDev / Math.sqrt(sampleSize));
+            const lowerBound = sampleMean - marginOfError;
+            const upperBound = sampleMean + marginOfError;
+
+            document.getElementById("zResult").innerText = `Confidence Interval: [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]`;
+        });
+
+        // T-test Confidence Interval Calculation
+        document.getElementById("tTestButton").addEventListener("click", function() {
+            const sampleMean = parseFloat(document.getElementById("tSampleMean").value);
+            const stdDev = parseFloat(document.getElementById("tStdDev").value);
+            const sampleSize = parseFloat(document.getElementById("tSampleSizeT").value);
+            const confidenceLevel = parseFloat(document.getElementById("tConfidenceLevel").value);
+            const tCritical = 2.262; // For 95% confidence and df = n-1 (example for n=10)
+
+            const marginOfError = tCritical * (stdDev / Math.sqrt(sampleSize));
+            const lowerBound = sampleMean - marginOfError;
+            const upperBound = sampleMean + marginOfError;
+
+            document.getElementById("tResult").innerText = `Confidence Interval: [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]`;
+        });
+
+        // One-sample Hypothesis Testing
+        document.getElementById("oneSampleTestButton").addEventListener("click", function() {
+            const sampleMean = parseFloat(document.getElementById("oneSampleMean").value);
+            const populationMean = parseFloat(document.getElementById("onePopulationMean").value);
+            const stdDev = parseFloat(document.getElementById("oneStdDev").value);
+            const sampleSize = parseFloat(document.getElementById("oneSampleSize").value);
+
+            const zScore = (sampleMean - populationMean) / (stdDev / Math.sqrt(sampleSize));
+            const criticalValue = 1.96; // For 95% confidence
+
+            const result = Math.abs(zScore) > criticalValue ? "Reject the null hypothesis." : "Fail to reject the null hypothesis.";
+            document.getElementById("oneSampleResult").innerText = `Z-Score: ${zScore.toFixed(2)} - ${result}`;
+        });
+
+        // Chi-Square Test for Independence
+        document.getElementById("chiSquareButton").addEventListener("click", function() {
+            const data = document.getElementById("chiSquareData").value.split(',').map(Number);
+            const observed = data.reduce((acc, val) => acc + val, 0);
+            const expected = observed / data.length;
+            const chiSquare = data.reduce((acc, val) => acc + Math.pow(val - expected, 2) / expected, 0);
+
+            document.getElementById("chiSquareResult").innerText = `Chi-Square Value: ${chiSquare.toFixed(2)}`;
+        });
+    </script>
+</body>
+</html>
